@@ -3,6 +3,7 @@ package repo
 import (
 	"fmt"
 	"math"
+	"sync"
 
 	"github.com/mroobert/go-concurrency/simple-practical/http-app/db"
 	"github.com/mroobert/go-concurrency/simple-practical/http-app/models"
@@ -12,6 +13,7 @@ import (
 type repo struct {
 	products *db.ProductDB
 	orders   *db.OrderDB
+	mu       sync.Mutex
 }
 
 // Repo is the interface we expose to outside packages
@@ -67,6 +69,8 @@ func (r *repo) validateItem(item models.Item) error {
 }
 
 func (r *repo) processOrders(order *models.Order) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	r.processOrder(order)
 	r.orders.Upsert(*order)
 	fmt.Printf("Processing order %s completed\n", order.ID)
