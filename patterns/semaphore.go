@@ -11,11 +11,12 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-
-func SemaphoreMain(){
-	WorkLoadConcurrentSemaphoreV2()
+func SemaphoreMain() {
+	sem := Semaphore{}
+	sem.WorkLoadConcurrentSemaphoreV2()
 }
 
+type Semaphore struct{}
 
 type Task struct {
 	ID        int    `json:"id"`
@@ -29,10 +30,10 @@ type Task struct {
 //
 // In this case we request 100 Tasks by doing 100 HTTP requests to the server and print the title of each one.
 // For the moment the workload is not concurrent, but we will make it concurrent.
-func WorkLoad(){
+func (s Semaphore) WorkLoad() {
 	var t Task
 
-	for i:=0;i<100;i++{
+	for i := 0; i < 100; i++ {
 		res, err := http.Get(fmt.Sprintf("http://jsonplaceholder.typicode.com/todos/%d", i))
 		if err != nil {
 			log.Fatal(err)
@@ -49,12 +50,12 @@ func WorkLoad(){
 // WorkLoadConcurrent is the same as WorkLoad but it is concurrent.
 // We are using waitGroup to tell the main goroutine to wait for all the goroutines to finish.
 // In this way we can see the logs printed in the terminal.
-func WorkLoadConcurrent(){
-	var(
-		t Task
+func (s Semaphore) WorkLoadConcurrent() {
+	var (
+		t  Task
 		wg sync.WaitGroup
 	)
-	
+
 	wg.Add(100)
 	for i := 0; i < 100; i++ {
 		go func(i int) {
@@ -76,13 +77,13 @@ func WorkLoadConcurrent(){
 	wg.Wait()
 }
 
-// WorkLoadConcurrentSemaphoreV1 is the same as WorkLoadConcurrent but it uses a semaphore 
+// WorkLoadConcurrentSemaphoreV1 is the same as WorkLoadConcurrent but it uses a semaphore
 // to limit the number of concurrent goroutines.
-func WorkLoadConcurrentSemaphoreV1(){
+func (s Semaphore) WorkLoadConcurrentSemaphoreV1() {
 	type token struct{}
 
-	var(
-		t Task
+	var (
+		t  Task
 		wg sync.WaitGroup
 	)
 
@@ -111,10 +112,10 @@ func WorkLoadConcurrentSemaphoreV1(){
 
 	wg.Wait()
 	close(sem)
-} 
+}
 
 // WorkLoadConcurrentSemaphoreV2 is the same as WorkLoadConcurrentSemaphoreV1 but it uses errgroup.
-func WorkLoadConcurrentSemaphoreV2(){
+func (s Semaphore) WorkLoadConcurrentSemaphoreV2() {
 	var t Task
 
 	group, _ := errgroup.WithContext(context.Background())
@@ -132,13 +133,14 @@ func WorkLoadConcurrentSemaphoreV2(){
 			if err := json.NewDecoder(res.Body).Decode(&t); err != nil {
 				return err
 			}
-			
+
 			log.Println(t.Title)
 			return nil
 		})
 	}
 
-	err := group.Wait(); if err != nil {
+	err := group.Wait()
+	if err != nil {
 		log.Fatal(err)
 	}
 }

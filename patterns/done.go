@@ -5,8 +5,7 @@ import (
 	"time"
 )
 
-
-func DoneMain(){
+func DoneMain() {
 	done := make(chan struct{})
 
 	go doWork(done)
@@ -14,9 +13,9 @@ func DoneMain(){
 	close(done)
 }
 
-func doWork(done <-chan struct{}){
+func doWork(done <-chan struct{}) {
 	for {
-		select{
+		select {
 		case <-done:
 			fmt.Println("Done!")
 			return
